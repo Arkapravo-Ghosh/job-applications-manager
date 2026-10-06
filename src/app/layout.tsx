@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { getSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -118,6 +119,7 @@ export default async function RootLayout({
             © {new Date().getFullYear()} Arkapravo Ghosh. All rights reserved.
           </footer>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
