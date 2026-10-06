@@ -22,6 +22,7 @@
     <img src="https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/Drizzle_ORM-PostgreSQL-C5F74F?style=flat-square&logo=drizzle" alt="Drizzle ORM" />
     <img src="https://img.shields.io/badge/shadcn%2Fui-Components-black?style=flat-square" alt="shadcn/ui" />
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_3.0-blue.svg?style=flat-square" alt="AGPL-3.0 License" /></a>
   </p>
 </div>
 
@@ -78,7 +79,7 @@
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/arkapravoghosh/job-applications-manager.git
+git clone https://github.com/Arkapravo-Ghosh/job-applications-manager.git
 cd job-applications-manager
 ```
 
@@ -136,6 +137,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📄 License & Author
 
-Created and maintained by **Arkapravo Ghosh**.
+Created and maintained by **[Arkapravo Ghosh](https://github.com/Arkapravo-Ghosh)**.
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see the [LICENSE](LICENSE) file for the full text.
 
 © 2026 Arkapravo Ghosh. All rights reserved.

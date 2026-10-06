@@ -25,29 +25,29 @@ export default async function LandingPage() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full sm:w-auto">
           {session ? (
             <>
-              <Link href="/applications">
-                <Button size="lg" className="gap-2">
+              <Link href="/applications" className="w-full sm:w-auto">
+                <Button size="lg" className="gap-2 w-full sm:w-auto justify-center">
                   Go to Applications <ArrowRight className="size-4" />
                 </Button>
               </Link>
-              <Link href="/stats">
-                <Button size="lg" variant="outline" className="gap-2">
+              <Link href="/stats" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto justify-center">
                   <BarChart3 className="size-4" /> View Stats
                 </Button>
               </Link>
             </>
           ) : (
             <>
-              <Link href="/login">
-                <Button size="lg" className="gap-2">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button size="lg" className="gap-2 w-full sm:w-auto justify-center">
                   Sign In <ArrowRight className="size-4" />
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button size="lg" variant="outline">
+              <Link href="/register" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto justify-center">
                   Create Account
                 </Button>
               </Link>

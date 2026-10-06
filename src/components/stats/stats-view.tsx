@@ -464,10 +464,11 @@ export function StatsView({ applications }: StatsViewProps) {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                   <XAxis
                     dataKey="status"
-                    fontSize={12}
+                    fontSize={11}
+                    interval={0}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: "currentColor", opacity: 0.7 }}
+                    tick={{ fill: "currentColor", opacity: 0.8 }}
                   />
                   <YAxis
                     allowDecimals={false}

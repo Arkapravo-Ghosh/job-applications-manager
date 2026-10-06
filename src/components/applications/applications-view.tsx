@@ -216,7 +216,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
 
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="gap-2 self-start sm:self-auto rounded-xl shadow-xs h-10 px-4"
+          className="gap-2 w-full sm:w-auto justify-center rounded-xl shadow-xs h-10 px-4"
         >
           <Plus className="size-4" />
           <span>New Application</span>
@@ -224,49 +224,51 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
       </div>
 
       {/* Search and Filters Toolbar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:p-3.5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Main search bar */}
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
             <Input
               placeholder="Search by role, company, or notes..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="h-10 pl-9.5 pr-4 text-sm rounded-xl bg-background"
+              className="h-10 pl-9.5 pr-4 text-sm rounded-xl bg-background w-full"
             />
           </div>
 
-          {/* Filter 1: Status Filter with checkboxes and search within filter */}
-          <MultiFilterPopover
-            title="Status"
-            options={statusOptions}
-            selectedValues={selectedStatuses}
-            onSelectedChange={handleStatusesChange}
-            searchPlaceholder="Search statuses..."
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filter 1: Status Filter with checkboxes and search within filter */}
+            <MultiFilterPopover
+              title="Status"
+              options={statusOptions}
+              selectedValues={selectedStatuses}
+              onSelectedChange={handleStatusesChange}
+              searchPlaceholder="Search statuses..."
+            />
 
-          {/* Filter 2: Company Filter with checkboxes and search within filter */}
-          <MultiFilterPopover
-            title="Company"
-            options={companyOptions}
-            selectedValues={selectedCompanies}
-            onSelectedChange={handleCompaniesChange}
-            searchPlaceholder="Search companies..."
-          />
+            {/* Filter 2: Company Filter with checkboxes and search within filter */}
+            <MultiFilterPopover
+              title="Company"
+              options={companyOptions}
+              selectedValues={selectedCompanies}
+              onSelectedChange={handleCompaniesChange}
+              searchPlaceholder="Search companies..."
+            />
 
-          {/* Clear Filters button */}
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetFilters}
-              className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl"
-            >
-              <RotateCcw className="size-3.5" />
-              Reset Filters
-            </Button>
-          )}
+            {/* Clear Filters button */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl"
+              >
+                <RotateCcw className="size-3.5" />
+                Reset
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Active Filter Badges */}
@@ -317,222 +319,373 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
         )}
       </div>
 
-      {/* Applications Table Card */}
-      <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-border/80 hover:bg-transparent">
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Company</TableHead>
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Role</TableHead>
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Status</TableHead>
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Interviews</TableHead>
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Date Applied</TableHead>
-              <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Application Link</TableHead>
-              <TableHead className="text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedApplications.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center">
-                  <div className="flex flex-col items-center justify-center space-y-2.5">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground">
-                      <Briefcase className="size-6" />
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      No applications found
-                    </p>
-                    <p className="text-xs text-muted-foreground max-w-sm">
-                      {hasActiveFilters
-                        ? "Try clearing or adjusting your search filters to see matching job entries."
-                        : "You haven't added any job applications yet. Click 'New Application' to get started."}
-                    </p>
-                    {hasActiveFilters && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResetFilters}
-                        className="mt-2 text-xs rounded-xl"
-                      >
-                        Clear Filters
-                      </Button>
-                    )}
+      {/* Mobile & Tablet Card Grid (< lg) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 lg:hidden">
+        {paginatedApplications.length === 0 ? (
+          <div className="col-span-full rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+            <div className="flex size-12 mx-auto items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground mb-3">
+              <Briefcase className="size-6" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">No applications found</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+              {hasActiveFilters
+                ? "Try clearing or adjusting your search filters to see matching job entries."
+                : "You haven't added any job applications yet. Tap 'New Application' to get started."}
+            </p>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                className="mt-3 text-xs rounded-xl"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          paginatedApplications.map((job) => (
+            <div
+              key={job.id}
+              className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3 transition-colors"
+            >
+              {/* Card Header: Company + Role on left, Status Badge on right */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex size-9 items-center justify-center rounded-xl bg-secondary/80 text-foreground text-xs font-semibold shrink-0">
+                    <Building2 className="size-4.5 text-muted-foreground" />
                   </div>
-                </TableCell>
+                  <div className="min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate block">
+                      {job.company}
+                    </span>
+                    <span className="text-xs font-medium text-muted-foreground truncate block">
+                      {job.role}
+                    </span>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  <StatusBadge status={job.status} />
+                </div>
+              </div>
+
+              {/* Notes if present */}
+              {job.notes && (
+                <div className="flex items-start gap-1.5 rounded-xl bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                  <FileText className="size-3.5 shrink-0 mt-0.5 text-muted-foreground/70" />
+                  <span className="line-clamp-2 leading-relaxed">{job.notes}</span>
+                </div>
+              )}
+
+              {/* Meta row: Date applied + Application Link */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="size-3.5 text-muted-foreground shrink-0" />
+                  <span>{job.applicationDate}</span>
+                </div>
+
+                {job.link ? (
+                  <a
+                    href={job.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                  >
+                    <span>View Link</span>
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground/40">No link</span>
+                )}
+              </div>
+
+              {/* Card Bottom Row: Interviews Stepper on left, Edit/Delete on right */}
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Interviews:</span>
+                  <div className="inline-flex items-center gap-1 rounded-xl border border-input bg-background/50 dark:bg-input/30 p-0.5 shadow-2xs">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) - 1)}
+                      disabled={(job.interviewCount ?? 0) <= 0 || pendingUpdates[job.id]}
+                      title="Decrease interview count"
+                      aria-label="Decrease interview count"
+                    >
+                      <Minus className="size-3.5" />
+                    </Button>
+                    <span className="min-w-[22px] text-center font-bold text-xs tabular-nums text-foreground px-1">
+                      {job.interviewCount ?? 0}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) + 1)}
+                      disabled={pendingUpdates[job.id]}
+                      title="Increase interview count"
+                      aria-label="Increase interview count"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs rounded-xl"
+                    onClick={() => setEditingApplication(job)}
+                    title="Edit application"
+                  >
+                    <Edit2 className="size-3" />
+                    <span>Edit</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeletingApplication(job)}
+                    title="Delete application"
+                    aria-label="Delete application"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table (>= lg) */}
+      <div className="hidden lg:block rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="border-b border-border/80 hover:bg-transparent">
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-3">Company</TableHead>
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-3">Role</TableHead>
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-2">Status</TableHead>
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-2 text-center">Interviews</TableHead>
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-2">Date Applied</TableHead>
+                <TableHead className="font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-2">Link</TableHead>
+                <TableHead className="text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider py-3.5 px-3">Actions</TableHead>
               </TableRow>
-            ) : (
-              paginatedApplications.map((job) => (
-                <TableRow key={job.id} className="hover:bg-muted/30 transition-colors border-b border-border/50">
-                  {/* Company */}
-                  <TableCell className="font-medium py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-xl bg-secondary/80 text-foreground text-xs font-semibold shrink-0">
-                        <Building2 className="size-4 text-muted-foreground" />
+            </TableHeader>
+            <TableBody>
+              {paginatedApplications.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-48 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2.5">
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground">
+                        <Briefcase className="size-6" />
                       </div>
-                      <div className="min-w-0">
-                        <span className="text-sm font-semibold text-foreground truncate block">
-                          {job.company}
-                        </span>
-                        {job.notes && (
-                          <span
-                            className="text-[11px] text-muted-foreground truncate block max-w-xs flex items-center gap-1 mt-0.5"
-                            title={job.notes}
-                          >
-                            <FileText className="size-3 shrink-0" />
-                            {job.notes}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  {/* Role */}
-                  <TableCell className="py-3.5">
-                    <span className="text-sm font-medium text-foreground">{job.role}</span>
-                  </TableCell>
-
-                  {/* Status */}
-                  <TableCell className="py-3.5">
-                    <StatusBadge status={job.status} />
-                  </TableCell>
-
-                  {/* Interviews Stepper */}
-                  <TableCell className="py-3.5">
-                    <div className="inline-flex items-center gap-1 rounded-xl border border-input bg-transparent dark:bg-input/30 p-0.5 shadow-2xs">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                        onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) - 1)}
-                        disabled={(job.interviewCount ?? 0) <= 0 || pendingUpdates[job.id]}
-                        title="Decrease interview count"
-                      >
-                        <Minus className="size-3" />
-                      </Button>
-                      <span className="min-w-[20px] text-center font-semibold text-xs tabular-nums text-foreground px-1">
-                        {job.interviewCount ?? 0}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                        onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) + 1)}
-                        disabled={pendingUpdates[job.id]}
-                        title="Increase interview count"
-                      >
-                        <Plus className="size-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-
-                  {/* Date Applied */}
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="size-3 text-muted-foreground" />
-                      <span>{job.applicationDate}</span>
-                    </div>
-                  </TableCell>
-
-                  {/* Application Link Button */}
-                  <TableCell className="py-3.5">
-                    {job.link ? (
-                      <a
-                        href={job.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/40 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary hover:text-primary transition-colors group"
-                        title={job.link}
-                      >
-                        <span>View Application</span>
-                        <ExternalLink className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </a>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/40 pl-3">—</span>
-                    )}
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell className="text-right py-3.5">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-                        onClick={() => setEditingApplication(job)}
-                        title="Edit application"
-                      >
-                        <Edit2 className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeletingApplication(job)}
-                        title="Delete application"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <p className="text-sm font-semibold text-foreground">
+                        No applications found
+                      </p>
+                      <p className="text-xs text-muted-foreground max-w-sm">
+                        {hasActiveFilters
+                          ? "Try clearing or adjusting your search filters to see matching job entries."
+                          : "You haven't added any job applications yet. Click 'New Application' to get started."}
+                      </p>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResetFilters}
+                          className="mt-2 text-xs rounded-xl"
+                        >
+                          Clear Filters
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                paginatedApplications.map((job) => (
+                  <TableRow key={job.id} className="hover:bg-muted/30 transition-colors border-b border-border/50">
+                    {/* Company */}
+                    <TableCell className="font-medium py-3.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-7.5 items-center justify-center rounded-lg bg-secondary/80 text-foreground text-xs font-semibold shrink-0">
+                          <Building2 className="size-3.5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 max-w-[140px] lg:max-w-[200px]">
+                          <span className="text-xs font-semibold text-foreground truncate block">
+                            {job.company}
+                          </span>
+                          {job.notes && (
+                            <span
+                              className="text-[10px] text-muted-foreground truncate block flex items-center gap-1 mt-0.5"
+                              title={job.notes}
+                            >
+                              <FileText className="size-2.5 shrink-0" />
+                              {job.notes}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
 
-        {/* Pagination Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border px-4 py-3 bg-card text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span>
-              Showing {totalItems === 0 ? 0 : startIndex + 1}–
-              {Math.min(startIndex + pageSize, totalItems)} of {totalItems} applications
-            </span>
+                    {/* Role */}
+                    <TableCell className="py-3.5 px-3">
+                      <span className="text-xs font-medium text-foreground truncate block max-w-[130px] lg:max-w-[180px]" title={job.role}>
+                        {job.role}
+                      </span>
+                    </TableCell>
 
-            <div className="flex items-center gap-1.5 ml-4">
-              <span>Per page:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="h-7.5 rounded-lg border border-border bg-background px-2 text-xs text-foreground cursor-pointer"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-          </div>
+                    {/* Status */}
+                    <TableCell className="py-3.5 px-2 whitespace-nowrap">
+                      <StatusBadge status={job.status} />
+                    </TableCell>
 
-          {/* Page navigation */}
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-2.5 text-xs rounded-lg"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={safeCurrentPage <= 1}
+                    {/* Interviews Stepper */}
+                    <TableCell className="py-3.5 px-2 text-center">
+                      <div className="inline-flex items-center gap-0.5 rounded-lg border border-input bg-transparent dark:bg-input/30 p-0.5 shadow-2xs">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-6 rounded-md text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                          onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) - 1)}
+                          disabled={(job.interviewCount ?? 0) <= 0 || pendingUpdates[job.id]}
+                          title="Decrease interview count"
+                          aria-label="Decrease interview count"
+                        >
+                          <Minus className="size-3" />
+                        </Button>
+                        <span className="min-w-[18px] text-center font-semibold text-xs tabular-nums text-foreground px-0.5">
+                          {job.interviewCount ?? 0}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-6 rounded-md text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                          onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) + 1)}
+                          disabled={pendingUpdates[job.id]}
+                          title="Increase interview count"
+                          aria-label="Increase interview count"
+                        >
+                          <Plus className="size-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+
+                    {/* Date Applied */}
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-3.5 px-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="size-3 text-muted-foreground shrink-0" />
+                        <span className="text-[11px]">{job.applicationDate}</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Application Link Button */}
+                    <TableCell className="py-3.5 px-2 whitespace-nowrap">
+                      {job.link ? (
+                        <a
+                          href={job.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-secondary/40 px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-secondary hover:text-primary transition-colors group"
+                          title={job.link}
+                        >
+                          <span>View</span>
+                          <ExternalLink className="size-2.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground/40 pl-2">—</span>
+                      )}
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right py-3.5 px-3 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={() => setEditingApplication(job)}
+                          title="Edit application"
+                          aria-label="Edit application"
+                        >
+                          <Edit2 className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeletingApplication(job)}
+                          title="Delete application"
+                          aria-label="Delete application"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Responsive Pagination Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-xs text-xs text-muted-foreground">
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+          <span>
+            Showing {totalItems === 0 ? 0 : startIndex + 1}–
+            {Math.min(startIndex + pageSize, totalItems)} of {totalItems}
+          </span>
+
+          <div className="flex items-center gap-1.5 ml-2 sm:ml-4">
+            <span>Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="h-7.5 rounded-lg border border-border bg-background px-2 text-xs text-foreground cursor-pointer"
             >
-              <ChevronLeft className="size-3.5 mr-0.5" />
-              Previous
-            </Button>
-
-            <span className="px-2 text-xs font-semibold text-foreground">
-              Page {safeCurrentPage} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-2.5 text-xs rounded-lg"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safeCurrentPage >= totalPages}
-            >
-              Next
-              <ChevronRight className="size-3.5 ml-0.5" />
-            </Button>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
           </div>
+        </div>
+
+        {/* Page navigation */}
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8.5 px-3 text-xs rounded-xl"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={safeCurrentPage <= 1}
+          >
+            <ChevronLeft className="size-3.5 mr-0.5" />
+            Previous
+          </Button>
+
+          <span className="px-2 text-xs font-semibold text-foreground">
+            Page {safeCurrentPage} of {totalPages}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8.5 px-3 text-xs rounded-xl"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safeCurrentPage >= totalPages}
+          >
+            Next
+            <ChevronRight className="size-3.5 ml-0.5" />
+          </Button>
         </div>
       </div>
 
