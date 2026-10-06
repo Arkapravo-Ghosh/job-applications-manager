@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { getSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -90,6 +91,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 
   return (
     <html
@@ -97,7 +99,18 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={cn("h-full", "antialiased", jetbrainsMono.variable, "font-sans", geist.variable)}
     >
+      {gtmId && <GoogleTagManager gtmId={gtmId} />}
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans tracking-[-0.01em]">
+        {gtmId && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Navbar user={session} />
           <main className="flex-1">{children}</main>
