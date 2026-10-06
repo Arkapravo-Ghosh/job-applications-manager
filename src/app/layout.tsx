@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { getSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { Analytics } from "@vercel/analytics/next";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -105,6 +106,7 @@ export default async function RootLayout({
             © {new Date().getFullYear()} Arkapravo Ghosh. All rights reserved.
           </footer>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
