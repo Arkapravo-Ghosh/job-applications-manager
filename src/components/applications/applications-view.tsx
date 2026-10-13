@@ -371,9 +371,12 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
 
               {/* Notes if present */}
               {job.notes && (
-                <div className="flex items-start gap-1.5 rounded-xl bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                <div
+                  className="flex items-start gap-1.5 rounded-xl bg-muted/30 px-3 py-2 text-xs text-muted-foreground min-w-0"
+                  title={job.notes}
+                >
                   <FileText className="size-3.5 shrink-0 mt-0.5 text-muted-foreground/70" />
-                  <span className="line-clamp-2 leading-relaxed">{job.notes}</span>
+                  <span className="line-clamp-2 leading-relaxed break-words min-w-0">{job.notes}</span>
                 </div>
               )}
 
@@ -515,18 +518,18 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
                         <div className="flex size-7.5 items-center justify-center rounded-lg bg-secondary/80 text-foreground text-xs font-semibold shrink-0">
                           <Building2 className="size-3.5 text-muted-foreground" />
                         </div>
-                        <div className="min-w-0 max-w-[140px] lg:max-w-[200px]">
-                          <span className="text-xs font-semibold text-foreground truncate block">
+                        <div className="min-w-0 max-w-[200px] xl:max-w-[280px] 2xl:max-w-[360px]">
+                          <span className="text-xs font-semibold text-foreground truncate block" title={job.company}>
                             {job.company}
                           </span>
                           {job.notes && (
-                            <span
-                              className="text-[10px] text-muted-foreground truncate block flex items-center gap-1 mt-0.5"
+                            <div
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5 min-w-0"
                               title={job.notes}
                             >
-                              <FileText className="size-2.5 shrink-0" />
-                              {job.notes}
-                            </span>
+                              <FileText className="size-2.5 shrink-0 text-muted-foreground/70" />
+                              <span className="truncate min-w-0">{job.notes}</span>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -534,7 +537,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
 
                     {/* Role */}
                     <TableCell className="py-3.5 px-3">
-                      <span className="text-xs font-medium text-foreground truncate block max-w-[130px] lg:max-w-[180px]" title={job.role}>
+                      <span className="text-xs font-medium text-foreground truncate block max-w-[180px] xl:max-w-[240px] 2xl:max-w-[300px]" title={job.role}>
                         {job.role}
                       </span>
                     </TableCell>
