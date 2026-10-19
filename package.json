@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "db:migrate:ghosting": "tsx scripts/migrate-ghosting.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:integration": "tsx --test tests/integration/*.test.ts",
+    "db:enable:ghosting-cron": "tsx scripts/enable-ghosting-cron.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -6,6 +6,7 @@ import { jobApplications, APPLICATION_STATUSES } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { changeInterviewCount, updateApplication } from "@/lib/application-mutations";
 
 const jobSchema = z.object({
   role: z.string().min(1, "Role title is required").max(150),
@@ -62,7 +63,9 @@ export async function createJobAction(formData: FormData): Promise<JobActionResu
   }
 
   try {
+    const createdAt = new Date();
     await db.insert(jobApplications).values({
+      createdAt, updatedAt: createdAt, statusUpdatedAt: createdAt,
       userId: session.userId,
       role: validated.data.role,
       company: validated.data.company,
@@ -104,19 +107,16 @@ export async function updateJobAction(id: string, formData: FormData): Promise<J
   }
 
   try {
-    await db
-      .update(jobApplications)
-      .set({
-        role: validated.data.role,
-        company: validated.data.company,
-        status: validated.data.status,
-        applicationDate: validated.data.applicationDate,
-        link: validated.data.link || null,
-        notes: validated.data.notes || null,
-        interviewCount: validated.data.interviewCount,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(jobApplications.id, id), eq(jobApplications.userId, session.userId)));
+    const expectedUpdatedAt = formData.get("expectedUpdatedAt");
+    if (typeof expectedUpdatedAt !== "string" || !z.iso.datetime().safeParse(expectedUpdatedAt).success) {
+      return { error: "Please reopen this application before saving." };
+    }
+    const saved = await updateApplication(session.userId, id, {
+      ...validated.data,
+      link: validated.data.link || null,
+      notes: validated.data.notes || null,
+    }, formData.get("interviewAdded") === "true", expectedUpdatedAt);
+    if (!saved) return { error: "This application changed or is no longer available. Reopen it to load the latest version." };
 
     revalidatePath("/applications");
     revalidatePath("/stats");
@@ -127,22 +127,19 @@ export async function updateJobAction(id: string, formData: FormData): Promise<J
   }
 }
 
-export async function updateInterviewCountAction(id: string, count: number): Promise<JobActionResult> {
+export async function updateInterviewCountAction(id: string, delta: number): Promise<JobActionResult> {
   const session = await getSession();
   if (!session) {
     return { error: "Unauthorized" };
   }
 
-  const validatedCount = Math.max(0, Math.floor(count));
+  if (!z.uuid().safeParse(id).success || (delta !== 1 && delta !== -1)) {
+    return { error: "Invalid interview count change" };
+  }
 
   try {
-    await db
-      .update(jobApplications)
-      .set({
-        interviewCount: validatedCount,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(jobApplications.id, id), eq(jobApplications.userId, session.userId)));
+    const saved = await changeInterviewCount(session.userId, id, delta);
+    if (!saved) return { error: "Application not found" };
 
     revalidatePath("/applications");
     revalidatePath("/stats");

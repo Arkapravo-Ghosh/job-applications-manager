@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createJobAction, updateJobAction } from "@/actions/jobs";
-import { APPLICATION_STATUSES, type JobApplication, type ApplicationStatus } from "@/db/schema";
+import type { JobApplication } from "@/db/schema";
+import { APPLICATION_STATUSES, STATUS_CONFIG, type ApplicationStatus } from "@/lib/application-status";
 import { AlertCircle, Briefcase, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,14 +43,6 @@ interface ApplicationFormProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
-
-const STATUS_CONFIG: Record<ApplicationStatus, { label: string; dotColor: string }> = {
-  applied: { label: "Applied", dotColor: "bg-blue-500" },
-  interviewing: { label: "Interviewing", dotColor: "bg-amber-500" },
-  selected: { label: "Selected / Offer", dotColor: "bg-emerald-500" },
-  rejected: { label: "Rejected", dotColor: "bg-rose-500" },
-  withdrawn: { label: "Withdrawn", dotColor: "bg-zinc-500" },
-};
 
 function ApplicationForm({
   application,
@@ -74,6 +67,7 @@ function ApplicationForm({
   );
   const [link, setLink] = useState(application?.link ?? "");
   const [interviewCount, setInterviewCount] = useState(application?.interviewCount ?? 0);
+  const [interviewAdded, setInterviewAdded] = useState(false);
   const [notes, setNotes] = useState(application?.notes ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,6 +82,8 @@ function ApplicationForm({
     formData.append("link", link);
     formData.append("interviewCount", interviewCount.toString());
     formData.append("notes", notes);
+    formData.append("interviewAdded", String(interviewAdded));
+    if (application) formData.append("expectedUpdatedAt", new Date(application.updatedAt ?? application.createdAt).toISOString());
 
     startTransition(async () => {
       const res = isEditing && application
@@ -234,6 +230,7 @@ function ApplicationForm({
               onClick={() => setInterviewCount((c) => Math.max(0, c - 1))}
               disabled={interviewCount <= 0}
               title="Decrease interview count"
+              aria-label="Decrease interview count"
             >
               <Minus className="size-3.5" />
             </Button>
@@ -245,8 +242,9 @@ function ApplicationForm({
               variant="ghost"
               size="icon"
               className="size-7 rounded-lg text-muted-foreground hover:text-foreground active:scale-95 transition-all"
-              onClick={() => setInterviewCount((c) => c + 1)}
+              onClick={() => { setInterviewCount((c) => c + 1); setStatus("interviewing"); setInterviewAdded(true); }}
               title="Increase interview count"
+              aria-label="Increase interview count"
             >
               <Plus className="size-3.5" />
             </Button>

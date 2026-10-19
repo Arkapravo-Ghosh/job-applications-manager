@@ -4,6 +4,9 @@ import * as React from "react";
 import { useState, useMemo, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { JobApplication } from "@/db/schema";
+import { APPLICATION_STATUSES, STATUS_CONFIG } from "@/lib/application-status";
+import type { GhostingSettings as Settings } from "@/lib/ghosting";
+import { GhostingSettings } from "./ghosting-settings";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,21 +34,28 @@ import {
 
 interface ApplicationsViewProps {
   initialApplications: JobApplication[];
+  initialGhostingSettings: Settings;
 }
 
-export function ApplicationsView({ initialApplications }: ApplicationsViewProps) {
+export function ApplicationsView({ initialApplications, initialGhostingSettings }: ApplicationsViewProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
   // Optimistic applications state for immediate zero-latency feedback
   const [applications, setOptimisticApplications] = useOptimistic(
     initialApplications,
-    (state, update: { id: string; count: number }) =>
+    (state, update: { id: string; delta: 1 | -1 }) =>
       state.map((job) =>
-        job.id === update.id ? { ...job, interviewCount: update.count } : job
+        job.id === update.id ? {
+          ...job,
+          interviewCount: Math.max(0, job.interviewCount + update.delta),
+          ...(update.delta === 1 ? { status: "interviewing" } : {}),
+        } : job
       )
   );
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
+
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,10 +78,9 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
       counts[job.status] = (counts[job.status] || 0) + 1;
     });
 
-    const definedStatuses = ["applied", "interviewing", "selected", "rejected", "withdrawn"];
-    return definedStatuses.map((st) => ({
+    return APPLICATION_STATUSES.map((st) => ({
       value: st,
-      label: st,
+      label: STATUS_CONFIG[st].label,
       count: counts[st] || 0,
     }));
   }, [applications]);
@@ -135,22 +144,21 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
     });
   }, [applications, searchQuery, selectedStatuses, selectedCompanies]);
 
-  const handleUpdateInterviewCount = (id: string, newCount: number) => {
-    if (newCount < 0) return;
-    const target = applications.find((j) => j.id === id);
-    if (!target) return;
-    const prevCount = target.interviewCount ?? 0;
-    if (newCount === prevCount) return;
-
-    setPendingUpdates((prev) => ({ ...prev, [id]: true }));
-
+  const handleUpdateInterviewCount = (id: string, delta: 1 | -1) => {
+    const target = applications.find((job) => job.id === id);
+    if (!target || pendingUpdates[id] || (delta === -1 && target.interviewCount <= 0)) return;
+    setUpdateError(null);
+    setPendingUpdates((previous) => ({ ...previous, [id]: true }));
     startTransition(async () => {
-      setOptimisticApplications({ id, count: newCount });
+      setOptimisticApplications({ id, delta });
       try {
-        await updateInterviewCountAction(id, newCount);
+        const result = await updateInterviewCountAction(id, delta);
+        if (result.error) setUpdateError(result.error);
+      } catch {
+        setUpdateError("Could not update interviews. Please try again.");
       } finally {
-        setPendingUpdates((prev) => {
-          const next = { ...prev };
+        setPendingUpdates((previous) => {
+          const next = { ...previous };
           delete next[id];
           return next;
         });
@@ -204,7 +212,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
   return (
     <div className="space-y-5">
       {/* Top Header / Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Job Applications
@@ -214,14 +222,18 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="gap-2 w-full sm:w-auto justify-center rounded-xl shadow-xs h-10 px-4"
-        >
-          <Plus className="size-4" />
-          <span>New Application</span>
-        </Button>
+        <div className="flex shrink-0 flex-col gap-2 min-[400px]:flex-row">
+          <GhostingSettings initialSettings={initialGhostingSettings} />
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            className="gap-2 w-full min-[400px]:w-auto justify-center rounded-xl shadow-xs h-11 px-4"
+          >
+            <Plus className="size-4" />
+            <span>New Application</span>
+          </Button>
+        </div>
       </div>
+      {updateError && <p role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{updateError}</p>}
 
       {/* Search and Filters Toolbar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:p-3.5 shadow-xs">
@@ -412,7 +424,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
                       variant="ghost"
                       size="icon"
                       className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                      onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) - 1)}
+                      onClick={() => handleUpdateInterviewCount(job.id, -1)}
                       disabled={(job.interviewCount ?? 0) <= 0 || pendingUpdates[job.id]}
                       title="Decrease interview count"
                       aria-label="Decrease interview count"
@@ -427,7 +439,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
                       variant="ghost"
                       size="icon"
                       className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                      onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) + 1)}
+                      onClick={() => handleUpdateInterviewCount(job.id, 1)}
                       disabled={pendingUpdates[job.id]}
                       title="Increase interview count"
                       aria-label="Increase interview count"
@@ -555,7 +567,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
                           variant="ghost"
                           size="icon"
                           className="size-6 rounded-md text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) - 1)}
+                          onClick={() => handleUpdateInterviewCount(job.id, -1)}
                           disabled={(job.interviewCount ?? 0) <= 0 || pendingUpdates[job.id]}
                           title="Decrease interview count"
                           aria-label="Decrease interview count"
@@ -570,7 +582,7 @@ export function ApplicationsView({ initialApplications }: ApplicationsViewProps)
                           variant="ghost"
                           size="icon"
                           className="size-6 rounded-md text-muted-foreground hover:text-foreground active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          onClick={() => handleUpdateInterviewCount(job.id, (job.interviewCount ?? 0) + 1)}
+                          onClick={() => handleUpdateInterviewCount(job.id, 1)}
                           disabled={pendingUpdates[job.id]}
                           title="Increase interview count"
                           aria-label="Increase interview count"

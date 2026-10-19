@@ -5,6 +5,8 @@ import { jobApplications } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { StatsView } from "@/components/stats/stats-view";
 
+import { GhostingSync } from "@/components/applications/ghosting-sync";
+
 export const metadata = {
   title: "Stats & Analytics — JobTrack",
   description: "Visualize and analyze your job search progress with interactive charts",
@@ -26,6 +28,7 @@ export default async function StatsPage() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+      <GhostingSync />
       <StatsView applications={userApplications} />
     </div>
   );

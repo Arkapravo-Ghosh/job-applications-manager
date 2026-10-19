@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { JobApplication } from "@/db/schema";
+import { STATUS_CONFIG, type ApplicationStatus } from "@/lib/application-status";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
@@ -32,14 +33,6 @@ import { cn } from "@/lib/utils";
 interface StatsViewProps {
   applications: JobApplication[];
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  applied: "#3b82f6", // blue
-  interviewing: "#f59e0b", // amber
-  selected: "#10b981", // emerald
-  rejected: "#f43f5e", // rose
-  withdrawn: "#71717a", // zinc
-};
 
 interface TooltipItem {
   value?: number;
@@ -157,6 +150,7 @@ export function StatsView({ applications }: StatsViewProps) {
       selected: 0,
       rejected: 0,
       withdrawn: 0,
+      ghosted: 0,
     };
     applications.forEach((job) => {
       if (counts[job.status] !== undefined) {
@@ -252,13 +246,14 @@ export function StatsView({ applications }: StatsViewProps) {
       selected: "Selected",
       rejected: "Rejected",
       withdrawn: "Withdrawn",
+      ghosted: "Ghosted",
     };
 
     return Object.entries(statusCounts).map(([status, count]) => ({
       status: labels[status] || status,
       rawStatus: status,
       count,
-      color: STATUS_COLORS[status] || "#64748b",
+      color: STATUS_CONFIG[status as ApplicationStatus]?.chartColor || "#64748b",
     }));
   }, [statusCounts]);
 

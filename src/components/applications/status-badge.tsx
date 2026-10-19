@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { STATUS_CONFIG, type ApplicationStatus } from "@/lib/application-status";
 
 interface StatusBadgeProps {
   status: string;
@@ -9,20 +10,8 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const normalized = status.toLowerCase();
 
-  const styles: Record<string, string> = {
-    applied:
-      "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    interviewing:
-      "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
-    selected:
-      "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    rejected:
-      "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    withdrawn:
-      "bg-neutral-500/15 text-neutral-700 dark:text-neutral-400 border-neutral-500/30",
-  };
-
-  const statusStyle = styles[normalized] || "bg-muted text-muted-foreground border-border";
+  const config = STATUS_CONFIG[normalized as ApplicationStatus];
+  const statusStyle = config?.badgeClass || "bg-muted text-muted-foreground border-border";
 
   return (
     <span
@@ -33,15 +22,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       )}
     >
       <span
-        className={cn("size-1.5 rounded-full", {
-          "bg-blue-500": normalized === "applied",
-          "bg-amber-500": normalized === "interviewing",
-          "bg-emerald-500": normalized === "selected",
-          "bg-rose-500": normalized === "rejected",
-          "bg-neutral-500": normalized === "withdrawn",
-        })}
+        className={cn("size-1.5 rounded-full", config?.dotColor)}
       />
-      {status}
+      {config?.label ?? status}
     </span>
   );
 }

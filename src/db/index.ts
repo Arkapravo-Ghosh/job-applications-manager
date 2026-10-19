@@ -14,7 +14,7 @@ if (!connectionString) {
 // For query connections in serverless / SSR
 const client = postgres(connectionString, {
   prepare: false, // Recommended for connection poolers like Neon
-  ssl: "require",
+  ssl: ["localhost", "127.0.0.1", "[::1]"].includes(new URL(connectionString).hostname) ? false : "require",
 });
 
 export const db = drizzle(client, { schema });

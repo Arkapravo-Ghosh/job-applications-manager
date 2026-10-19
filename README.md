@@ -31,9 +31,11 @@
 ## ✨ Features
 
 - 📋 **Application Lifecycle Management**
-  - Track stages: **Applied**, **Interviewing**, **Selected**, **Rejected**, and **Withdrawn**.
+  - Track stages: **Applied**, **Interviewing**, **Selected**, **Rejected**, **Withdrawn**, and **Ghosted**.
   - **Smart Autocomplete**: Dynamic typeahead suggestions for Company and Role titles based on your previous applications to prevent duplicate entries (e.g., "amex" vs "Amex").
   - **Interview Stepper**: Interactive `[-] count [+]` stepper directly in the table row to easily log rounds of interviews given, with instant optimistic UI updates.
+  - Every interview `+` sets the status to **Interviewing**, including from closed or Ghosted applications. Decrementing does not change status.
+  - **Auto-ghosting**: a compact button opens responsive settings with an opt-in toggle, six presets (default 3 months), and combined custom years/months/weeks/days.
   - Direct application links, customizable application dates, compensation/salary notes, and custom notes.
 
 - 🔍 **Interactive Table & Multi-Filtering**
@@ -104,6 +106,7 @@ Push the Drizzle schema to your PostgreSQL database:
 
 ```bash
 npm run db:push
+npm run db:migrate:ghosting
 ```
 
 *(Optional) Seed sample data:*
@@ -122,6 +125,54 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+
+### Existing installations: timestamp backfill
+
+Run `npm run db:migrate:ghosting` **before serving the updated app or running `db:push` against an existing database**. The transactional, repeatable migration adds missing columns and populates `status_updated_at` from `updated_at`, falling back to `created_at`. Missing `updated_at` values are filled from `created_at`. Existing non-null timestamps, statuses, counts, and application dates are preserved.
+
+New applications initialize all three timestamps to the creation instant. The migration installs a `BEFORE INSERT` trigger so direct database inserts that supply a historical `created_at` also inherit that value for omitted update timestamps. Do not skip the migration on a new database: `db:push` alone does not install this trigger.
+
+Only a status change or interview `+` resets the inactivity clock. Editing notes or other details and decrementing interviews do not reset it. Historical status-change dates cannot be recovered; backfilled `updated_at` may reflect a later ordinary edit.
+
+### Daily background checks with pg_cron
+
+All ghosting rules live in PostgreSQL functions installed by `npm run db:migrate:ghosting`. Both the web app and `pg_cron` call these functions, so calendar arithmetic, eligibility, locking, and batching use one implementation.
+
+Enable the scheduler once per database:
+
+1. Load `pg_cron` on the PostgreSQL compute and set `cron.database_name` to the application database. On Neon, use the endpoint's `settings.pg_settings` configuration and restart the compute to apply it; preserve other endpoint settings. See [Neon's pg_cron setup](https://neon.com/docs/extensions/pg_cron).
+2. Run `npm run db:enable:ghosting-cron`. This installs the extension and creates/updates the named job **jobtrack-auto-ghosting**, running `SELECT public.jobtrack_reconcile_all();` daily at `0 0 * * *` (UTC, 05:30 IST). Re-running the command updates the same job rather than duplicating it.
+3. Verify the job and its execution history:
+
+```sql
+SELECT jobid, jobname, schedule, database, active
+FROM cron.job WHERE jobname = 'jobtrack-auto-ghosting';
+SELECT status, return_message, start_time, end_time
+FROM cron.job_run_details
+WHERE jobid IN (SELECT jobid FROM cron.job WHERE jobname = 'jobtrack-auto-ghosting')
+ORDER BY start_time DESC LIMIT 5;
+```
+
+This scheduler requires no Vercel cron configuration, HTTP endpoint, or `CRON_SECRET`. It runs independently of the website deployment. Functions use caller privileges, and execution is revoked from PUBLIC; schedule the job as the application database role that owns them. On Neon, jobs execute while the compute is active. The configured app endpoint was verified to have `suspend_timeout_seconds = 0` when this integration was installed.
+
+Applications and stats also catch up through authenticated Server Actions on open/focus, including refreshing changes that the database scheduler already made; no database writes occur during page rendering. Only overdue Applied/Interviewing applications for enabled users become Ghosted. Disabling automation does not restore past statuses; a manual status change or interview `+` can reopen them. Settings default to off and 3 months per user. Calendar years/months clamp to month end before adding weeks/days, using UTC.
+
+Sweeps use locked, conditional updates in batches of 500 (up to 2,000 per user per invocation, 100 overdue users per cron invocation). Repeated or overlapping invocations are safe; unusually large backlogs or skipped busy rows may require further invocations. Ordinary background transitions can occur after the deadline on the next successful daily run; open/focus checks catch up sooner.
+
+### Verification
+
+```bash
+npm test
+TEST_DATABASE_URL=postgresql://user@127.0.0.1:5432/test_database npm run test:integration
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+Integration tests require a separate local PostgreSQL connection via `TEST_DATABASE_URL`, create disposable schemas, and never modify the configured application's tables. They cover legacy backfills, duration arithmetic, exact deadline boundaries, account isolation, optimistic-write conflict protection, concurrent increments and reconciliation, and scheduled execution without a UI.
+
+For an isolated verification build alongside a running dev server, set `NEXT_DIST_DIR=.next-qa-build` for both `npm run build` and `npm start -- --port 3001`, along with a separate test `DATABASE_URL`. This leaves the normal `.next` dev build running.
+
 ## 📦 Available Scripts
 
 | Command | Description |
@@ -131,6 +182,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run start` | Starts the production server |
 | `npm run lint` | Runs ESLint checks across the codebase |
 | `npm run db:push` | Pushes the Drizzle ORM schema directly to the database |
+| `npm run db:migrate:ghosting` | Add ghosting preferences and backfill status timestamps safely |
+| `npm run db:enable:ghosting-cron` | Install pg_cron and register the daily database job |
+| `npm test` | Run duration and validation unit tests |
+| `npm run test:integration` | Run database integration tests using local TEST_DATABASE_URL |
 | `npm run db:seed` | Seeds database with initial data |
 
 ---
