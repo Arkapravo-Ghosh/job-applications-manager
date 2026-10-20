@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { StatsView } from "@/components/stats/stats-view";
 
 import { GhostingSync } from "@/components/applications/ghosting-sync";
+import { getGhostingSettings } from "@/lib/ghosting-server";
 
 export const metadata = {
   title: "Stats & Analytics — JobTrack",
@@ -20,16 +21,19 @@ export default async function StatsPage() {
   }
 
   // SSR fetch directly from PostgreSQL using Drizzle ORM
-  const userApplications = await db
-    .select()
+  const [ghostingSettings, userApplications] = await Promise.all([getGhostingSettings(session.userId), db
+    .select({ id: jobApplications.id, company: jobApplications.company, role: jobApplications.role,
+      status: jobApplications.status, applicationDate: jobApplications.applicationDate,
+      interviewCount: jobApplications.interviewCount, statusUpdatedAt: jobApplications.statusUpdatedAt,
+      updatedAt: jobApplications.updatedAt, createdAt: jobApplications.createdAt })
     .from(jobApplications)
     .where(eq(jobApplications.userId, session.userId))
-    .orderBy(desc(jobApplications.applicationDate));
+    .orderBy(desc(jobApplications.applicationDate))]);
 
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
       <GhostingSync />
-      <StatsView applications={userApplications} />
+      <StatsView applications={userApplications} ghostingSettings={ghostingSettings} snapshotAt={new Date().toISOString()} />
     </div>
   );
 }

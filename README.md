@@ -44,10 +44,12 @@
   - **Sorting & Pagination**: Sort by date, company, role, status, or interview rounds with clean pagination controls.
 
 - 📊 **Visual Analytics (`/stats`)**
-  - **KPI Metrics**: Overview cards for Total Applications, Active Pipeline, Offers Received, Rejection Rate, and Total Interview Rounds.
-  - **Application Funnel**: Track conversion rates at every stage of your hiring pipeline.
-  - **Cadence & Timeline**: Interactive timeline chart depicting application activity over time.
-  - **Status & Company Breakdowns**: Visual distribution across stages and top applied companies using Recharts.
+  - **Shared reporting period**: Last week, month, 3 months (default), 6 months, year, or an inclusive custom date range. Every view filters by application submission date; current outcomes and interview counts are attached to those applications, not necessarily events that occurred in that period.
+  - **Three focused charts**: Current pipeline (ring by default, switchable to bar), application cadence (bar or line, including zero periods), and interview workload (1, 2, 3, 4, 5+ recorded interviews; no assumed interview types).
+  - **Useful summaries**: Applications, distinct companies, total recorded interviews, and applications with recorded interviews, including subsequently rejected, withdrawn, or ghosted applications.
+  - **Needs attention**: Applied/Interviewing opportunities sorted by inactivity, with automatic ghosting deadlines when enabled. Inactivity measures the last recorded status change or interview addition, not recruiter contact.
+  - **Company / role comparisons**: Sortable counts and clearly defined rates, with cards on mobile/tablet and a desktop table. Drill-downs preserve the reporting period, chart choices, comparison settings, and scroll position when returning to stats.
+  - **Honest definitions**: Selected / Offer does not imply acceptance. Historical conversion and response times are not inferred from current statuses. Charts use existing shadcn components without modifying their source.
 
 - 🌓 **Modern Aesthetics & Dark Mode**
   - Clean, distraction-free interface built with Tailwind CSS and shadcn/ui.

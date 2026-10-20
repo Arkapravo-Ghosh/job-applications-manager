@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { useState, useMemo, useOptimistic, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { matchesScope, rangeLabel, readApplicationScope, safeStatsReturn } from "@/lib/stats-range";
 import type { JobApplication } from "@/db/schema";
 import { APPLICATION_STATUSES, STATUS_CONFIG } from "@/lib/application-status";
 import type { GhostingSettings as Settings } from "@/lib/ghosting";
@@ -39,6 +42,8 @@ interface ApplicationsViewProps {
 
 export function ApplicationsView({ initialApplications, initialGhostingSettings }: ApplicationsViewProps) {
   const router = useRouter();
+  const queryParams = useSearchParams();
+  const statsScope = useMemo(() => readApplicationScope(queryParams), [queryParams]);
   const [, startTransition] = useTransition();
 
   // Optimistic applications state for immediate zero-latency feedback
@@ -69,6 +74,10 @@ export function ApplicationsView({ initialApplications, initialGhostingSettings 
   // Dialog states
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState<JobApplication | null>(null);
+  const [closedLinkedId, setClosedLinkedId] = useState<string | null>(null);
+  const linkedApplication = statsScope?.id && statsScope.id !== closedLinkedId
+    ? applications.find((job) => job.id === statsScope.id) ?? null : null;
+  const activeEditingApplication = editingApplication ?? linkedApplication;
   const [deletingApplication, setDeletingApplication] = useState<JobApplication | null>(null);
 
   // Status Filter Options with live counts
@@ -121,6 +130,7 @@ export function ApplicationsView({ initialApplications, initialGhostingSettings 
   // Filtering
   const filteredApplications = useMemo(() => {
     return applications.filter((job) => {
+      if (statsScope && !matchesScope(job, statsScope)) return false;
       // Text search in role, company, or notes
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
@@ -142,7 +152,7 @@ export function ApplicationsView({ initialApplications, initialGhostingSettings 
 
       return true;
     });
-  }, [applications, searchQuery, selectedStatuses, selectedCompanies]);
+  }, [applications, searchQuery, selectedStatuses, selectedCompanies, statsScope]);
 
   const handleUpdateInterviewCount = (id: string, delta: 1 | -1) => {
     const target = applications.find((job) => job.id === id);
@@ -211,6 +221,26 @@ export function ApplicationsView({ initialApplications, initialGhostingSettings 
 
   return (
     <div className="space-y-5">
+      {statsScope ? <Alert>
+        <AlertTitle>Applications from your stats</AlertTitle>
+        <AlertDescription>
+          <p>Submitted {rangeLabel({ from: statsScope.from!, to: statsScope.to! })}
+            {statsScope.status ? ` · ${STATUS_CONFIG[statsScope.status as keyof typeof STATUS_CONFIG]?.label ?? statsScope.status}` : ""}
+            {statsScope.company ? ` · Company: ${statsScope.company}` : ""}{statsScope.role ? ` · Role: ${statsScope.role}` : ""}
+            {statsScope.rounds ? ` · ${statsScope.rounds} recorded interviews` : ""}{statsScope.interviewed ? " · With recorded interviews" : ""}
+            {statsScope.id ? " · Selected application" : ""}
+          </p>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button variant="outline" size="sm" render={<Link href={safeStatsReturn(queryParams.get("returnTo"))} scroll={false} />}>Back to stats</Button>
+            <Button variant="ghost" size="sm" onClick={() => {
+              const params = new URLSearchParams(queryParams.toString());
+              for (const key of [...params.keys()]) if (key.startsWith("stats") || key === "application" || key === "returnTo") params.delete(key);
+              window.history.replaceState(null, "", `/applications${params.size ? `?${params}` : ""}`);
+              handleResetFilters();
+            }}>Clear stats filters</Button>
+          </div>
+        </AlertDescription>
+      </Alert> : null}
       {/* Top Header / Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -715,11 +745,14 @@ export function ApplicationsView({ initialApplications, initialGhostingSettings 
 
       {/* Edit Dialog */}
       <ApplicationDialog
-        open={Boolean(editingApplication)}
+        open={Boolean(activeEditingApplication)}
         onOpenChange={(open) => {
-          if (!open) setEditingApplication(null);
+          if (!open) {
+            setEditingApplication(null);
+            setClosedLinkedId(statsScope?.id ?? null);
+          }
         }}
-        application={editingApplication}
+        application={activeEditingApplication}
         existingCompanies={existingCompanies}
         existingRoles={existingRoles}
         onSuccess={handleRefresh}
