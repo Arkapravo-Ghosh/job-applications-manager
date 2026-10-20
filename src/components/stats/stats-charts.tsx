@@ -24,7 +24,9 @@ const statusConfig = Object.fromEntries(APPLICATION_STATUSES.map((status) => [st
 
 export function PipelineChart({ summary, onDrillDown }: { summary: Summary; onDrillDown: DrillDown }) {
   const chartType = useStatsOption("pipelineChart", ["ring", "bar"], "ring");
-  const ringData = APPLICATION_STATUSES.map((status) => ({ status, count: summary.statusCounts[status], fill: `var(--color-${status})` }));
+  // Empty slices can consume a boundary gap; keep them in the legend, not the pie geometry.
+  const ringData = APPLICATION_STATUSES.filter((status) => summary.statusCounts[status] > 0)
+    .map((status) => ({ status, count: summary.statusCounts[status], fill: `var(--color-${status})` }));
   return <Card className="min-w-0" data-testid="pipeline-panel">
     <CardHeader>
       <div className="flex flex-wrap items-center justify-between gap-3"><CardTitle>Current pipeline</CardTitle>
@@ -38,7 +40,7 @@ export function PipelineChart({ summary, onDrillDown }: { summary: Summary; onDr
       <ChartContainer config={statusConfig} className="h-52 w-full aspect-auto" aria-label="Current pipeline status distribution">
         {chartType === "ring" ? <PieChart accessibilityLayer>
           <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="status" />} />
-          <Pie data={ringData} dataKey="count" nameKey="status" innerRadius={60} outerRadius={86} paddingAngle={2} strokeWidth={0} isAnimationActive={false} cursor="pointer"
+          <Pie data={ringData} dataKey="count" nameKey="status" innerRadius={60} outerRadius={86} paddingAngle={0} stroke="var(--card)" strokeWidth={ringData.length > 1 ? 1.5 : 0} isAnimationActive={false} cursor="pointer"
             onClick={(_, index) => { if (ringData[index]) onDrillDown({ status: ringData[index].status }); }}>
             <Label content={({ viewBox }) => viewBox && "cx" in viewBox && "cy" in viewBox ? <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
               <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-2xl font-semibold">{summary.total}</tspan><tspan x={viewBox.cx} y={(viewBox.cy ?? 0) + 23} className="fill-muted-foreground text-xs">applications</tspan>
